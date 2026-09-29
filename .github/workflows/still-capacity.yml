@@ -1,0 +1,45 @@
+name: Still Linux build capacity
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capacity:
+    if: github.repository == 'jacob-camino/still-linux'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Record initial capacity
+        run: |
+          df -h "$GITHUB_WORKSPACE"
+          free -h
+          docker system df
+      - name: Apply existing ephemeral-runner cleanup
+        run: bash .github/scripts/cleanup.sh
+      - name: Report build feasibility
+        run: |
+          python3 - <<'PY'
+          import os, shutil
+          disk = shutil.disk_usage(os.environ['GITHUB_WORKSPACE'])
+          gib = 1024 ** 3
+          minimum = 100 * gib
+          summary = (
+              '# Still Linux runner capacity\n\n'
+              f'- Free disk after upstream cleanup: {disk.free / gib:.1f} GiB\n'
+              f'- Total disk: {disk.total / gib:.1f} GiB\n'
+              f'- CPUs: {os.cpu_count()}\n'
+              f'- Meets 100 GiB source/build floor: {disk.free >= minimum}\n\n'
+              'The inherited checkpoint process also needs space for the full '
+              'build tree and its compressed archive concurrently, plus Docker. '
+              'No Chromium checkout, compile, cache, artifact, or release was created.\n'
+          )
+          print(summary)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+              output.write(summary)
+          PY
