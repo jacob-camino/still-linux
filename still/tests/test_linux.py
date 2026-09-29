@@ -77,7 +77,7 @@ class LinuxIntegrationTests(unittest.TestCase):
             branding = source / 'chrome/app/theme/chromium/BRANDING'
             self.assertIn('PRODUCT_FULLNAME=Helium\n', branding.read_text())
             result = run(sys.executable, ROOT / 'still/apply.py', '--source', source, '--check-only')
-            self.assertIn('4 pending', result.stdout)
+            self.assertIn(f'{len(PATCHES)} pending', result.stdout)
             self.assertIn('PRODUCT_FULLNAME=Helium\n', branding.read_text())
             run(sys.executable, ROOT / 'still/apply.py', '--source', source)
             self.assertIn('PRODUCT_FULLNAME=Still\n', branding.read_text())
@@ -88,7 +88,7 @@ class LinuxIntegrationTests(unittest.TestCase):
             snapshot = {str(path.relative_to(source)): hashlib.sha256(path.read_bytes()).hexdigest()
                         for path in source.rglob('*') if path.is_file()}
             result = run(sys.executable, ROOT / 'still/apply.py', '--source', source)
-            self.assertEqual(result.stdout.count('Already applied:'), 4)
+            self.assertEqual(result.stdout.count('Already applied:'), len(PATCHES))
             self.assertEqual(snapshot, {str(path.relative_to(source)): hashlib.sha256(path.read_bytes()).hexdigest()
                                        for path in source.rglob('*') if path.is_file()})
 

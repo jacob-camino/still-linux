@@ -1,10 +1,13 @@
 # Still Linux integration
 
-This personal Helium fork adds the Ink Margin interface, larger left tabs,
-grayscale pages with a hover/focus color toggle, separate product identities,
-and the same signed local website controls as the Mac build. No Linux browser
-binary, AppImage, Debian package, or signed release has been built or tested.
-No paid build host or release workflow has been started.
+This personal Helium fork adds one vertically centered left island with Helium's
+actual address toolbar, tab groups, and large tabs. The Ink island stays hidden
+until hover or keyboard interaction and overlays a stable page viewport without
+shifting it. Native OS caption controls remain available. Pages are grayscale,
+with a hover/focus color toggle. Product identities are separate, and the signed
+local website controls match the Mac build. No Linux browser binary, AppImage,
+Debian package, or signed release has been built or tested. No paid build host
+or release workflow has been started.
 
 The pinned base is Helium Chromium `b38c4bdd2ecbe5c680dc3c5d464a2edc84d49d4c`,
 Chromium `154.0.8037.57`. `scripts/shared.sh` applies `still/apply.py` after
@@ -30,7 +33,8 @@ Upstream browser flags, sandbox behavior, policy rules, and signing logic remain
 unchanged. The optional blocker uses normal signed extension permissions.
 
 The shared UI, blocker, and product-string patches and all tracked blocker assets
-are byte-identical to the Mac fork. An AI model is not bundled or enabled.
+are byte-identical to the Mac fork. The Mac-only caption-control patch is excluded
+from this platform. An AI model is not bundled or enabled.
 
 ## Build and package
 
@@ -73,12 +77,16 @@ node --test still/blocking/tests/core.test.mjs
 ```
 
 Five integration tests passed on macOS using a selected-file fixture rebuilt
-from the exact Chromium commit and 67 ordered Helium core/Linux patches. They
-cover all four Still patches and repeat application under an outer Git
+from the exact Chromium commit and 86 ordered Helium core/Linux patches. They
+cover all six Still patches and repeat application under an outer Git
 repository, unchanged AppArmor permission semantics and browser flags,
 desktop/AppStream identities, rejection of missing/corrupt blocker output, and
 the real packaging script's tar/launcher/blocker placement with fake binaries
-and a fake AppImage tool. The five copied blocker unit tests also pass.
+and a fake AppImage tool. Seven shared patch-helper regressions cover overlapping
+patches, prefix upgrades, repeated checks, and rejection without source writes.
+The actual 35-file series also upgrades every prefix from zero through six
+patches and revalidates to identical final bytes. Four artifact-size guard tests cover missing/empty files and individual or
+combined upload limits. The five copied blocker unit tests also pass.
 
 Those fixture artifacts are not releases. Native Linux x64/ARM64 compilation,
 real AppImage/Debian tooling, distro dependencies and AppArmor behavior,

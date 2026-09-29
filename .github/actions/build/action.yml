@@ -65,6 +65,11 @@ runs:
       shell: bash
       run: bash ./.github/scripts/export-cache.sh
 
+    - name: Check Still checkpoint size
+      if: env.STILL_ARTIFACT_BUDGET == 'bounded'
+      shell: bash
+      run: python3 still/check-artifact-size.py --max-gib 50 ".github/cache/build-cache-${ARCH}.tar.zst"
+
     - name: Upload build cache
       uses: actions/upload-artifact@v4
       with:

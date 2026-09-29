@@ -16,11 +16,12 @@ permissions:
 
 env:
   ARCH: x86_64
+  STILL_ARTIFACT_BUDGET: bounded
 
 jobs:
   prep:
     name: Prepare Still sources
-    if: github.repository == 'jacob-camino/still-linux'
+    if: github.repository == 'jacob-camino/still-linux' && !github.event.repository.private
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:
@@ -54,12 +55,15 @@ jobs:
           outputs: type=docker,dest=/tmp/chromium-builder.tar
           build-args: NODE_VERSION=24
 
+      - name: Check Docker artifact size
+        run: python3 still/check-artifact-size.py --max-gib 10 /tmp/chromium-builder.tar
+
       - name: Upload Docker image
         uses: actions/upload-artifact@v4
         with:
           name: docker-image-${{ env.ARCH }}
           path: /tmp/chromium-builder.tar
-          retention-days: 3
+          retention-days: 7
           compression-level: 0
 
       - name: Prepare build tree
@@ -198,7 +202,8 @@ jobs:
     name: Package unsigned Still test artifacts
     runs-on: ubuntu-24.04
     timeout-minutes: 360
-    if: ${{ !cancelled() && !failure()
+    if: ${{ github.repository == 'jacob-camino/still-linux'
+            && !github.event.repository.private && !cancelled() && !failure()
             && contains(fromJSON('["success", "skipped"]'),
                         needs.build_part_10.result) }}
     needs: build_part_10
@@ -223,9 +228,18 @@ jobs:
         env:
           MAKE_DEB: 1
         run: bash package/docker-package.sh
+      - name: Check packaged archives
+        working-directory: build/release
+        run: |
+          xz -t Still-*-linux-x64.tar.xz
+          tar -tf Still-*-linux-x64.tar.xz >/dev/null
+          dpkg-deb --info Still-*-linux-x64.deb
       - name: Write package checksums
         working-directory: build/release
         run: sha256sum Still-*-linux-x64.AppImage Still-*-linux-x64.tar.xz Still-*-linux-x64.deb > SHA256SUMS
+      - name: Check final artifact size
+        working-directory: build/release
+        run: python3 ../../still/check-artifact-size.py --max-gib 5 Still-*-linux-x64.AppImage Still-*-linux-x64.tar.xz Still-*-linux-x64.deb SHA256SUMS
       - name: Upload unsigned test packages
         uses: actions/upload-artifact@v4
         with:
