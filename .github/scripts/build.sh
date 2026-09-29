@@ -34,7 +34,7 @@ else
     set +e
     timeout -k 5m -s INT "${_task_timeout}"s \
         "${_src_dir}/third_party/depot_tools/autoninja.py" \
-        -C out/Default chrome chromedriver
+        -C out/Default chrome chromedriver -j 4
     rc=$?
     set -e
 

@@ -1,0 +1,240 @@
+name: Build Still Linux unsigned test artifacts
+
+defaults:
+  run:
+    shell: bash
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: still-linux-x64-native
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  ARCH: x86_64
+
+jobs:
+  prep:
+    name: Prepare Still sources
+    if: github.repository == 'jacob-camino/still-linux'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with: { submodules: true }
+
+      - name: Free unused runner tools
+        run: bash .github/scripts/cleanup.sh
+
+      - name: Require measured source/build capacity
+        run: |
+          python3 - <<'PYCODE'
+          import shutil
+          free = shutil.disk_usage('.').free / 1024 ** 3
+          print(f'Available before preparation: {free:.1f} GiB')
+          if free < 100:
+              raise SystemExit('This free runner lacks the reviewed source/build capacity.')
+          PYCODE
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./docker
+          file: ./docker/build.Dockerfile
+          tags: chromium-builder:trixie-slim
+          outputs: type=docker,dest=/tmp/chromium-builder.tar
+          build-args: NODE_VERSION=24
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-${{ env.ARCH }}
+          path: /tmp/chromium-builder.tar
+          retention-days: 3
+          compression-level: 0
+
+      - name: Prepare build tree
+        uses: ./.github/actions/build
+        with:
+          prepare-only: true
+
+  build_part_01:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    needs: prep
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_02:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_01.outputs.status == 'running'
+    needs: build_part_01
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_03:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_02.outputs.status == 'running'
+    needs: build_part_02
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_04:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_03.outputs.status == 'running'
+    needs: build_part_03
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_05:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_04.outputs.status == 'running'
+    needs: build_part_04
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_06:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_05.outputs.status == 'running'
+    needs: build_part_05
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_07:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_06.outputs.status == 'running'
+    needs: build_part_06
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_08:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_07.outputs.status == 'running'
+    needs: build_part_07
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_09:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_08.outputs.status == 'running'
+    needs: build_part_08
+    outputs:
+      status: ${{ steps.build.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        id: build
+
+  build_part_10:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: needs.build_part_09.outputs.status == 'running'
+    needs: build_part_09
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - uses: ./.github/actions/build
+        with: { final: true }
+
+  package:
+    name: Package unsigned Still test artifacts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    if: ${{ !cancelled() && !failure()
+            && contains(fromJSON('["success", "skipped"]'),
+                        needs.build_part_10.result) }}
+    needs: build_part_10
+    steps:
+      - uses: actions/checkout@v4
+        with: { submodules: true }
+      - name: Free unused runner tools
+        run: bash .github/scripts/cleanup.sh
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-cache-${{ env.ARCH }}
+          path: .github/cache/
+      - name: Restore compiled tree
+        run: bash .github/scripts/import-cache.sh
+      - name: Validate source integration and blocker package
+        run: |
+          python3 still/apply.py --source build/src --check-only
+          python3 still/verify-package-inputs.py --source build/src
+          STILL_LINUX_FIXTURE=build/src python3 -m unittest discover -s still/tests -v
+          node --test still/blocking/tests/core.test.mjs
+      - name: Create unsigned packages
+        env:
+          MAKE_DEB: 1
+        run: bash package/docker-package.sh
+      - name: Write package checksums
+        working-directory: build/release
+        run: sha256sum Still-*-linux-x64.AppImage Still-*-linux-x64.tar.xz Still-*-linux-x64.deb > SHA256SUMS
+      - name: Upload unsigned test packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: still-linux-x64-unsigned-test
+          path: |
+            build/release/Still-*-linux-x64.AppImage
+            build/release/Still-*-linux-x64.tar.xz
+            build/release/Still-*-linux-x64.deb
+            build/release/SHA256SUMS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1

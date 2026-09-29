@@ -27,7 +27,9 @@ runs:
 
     - name: Load Docker image
       shell: bash
-      run: docker load -i /tmp/chromium-builder.tar
+      run: |
+        docker load -i /tmp/chromium-builder.tar
+        rm /tmp/chromium-builder.tar
 
     - name: Free up runner space
       if: runner.environment == 'github-hosted'
@@ -70,3 +72,5 @@ runs:
         path: .github/cache/build-cache-${{ env.ARCH }}.tar.zst
         if-no-files-found: error
         overwrite: true
+        retention-days: 1
+        compression-level: 0
