@@ -1,0 +1,143 @@
+Still: isolate Linux product, profile, desktop, and package identities.
+
+Apply after Helium core/Linux patches and name substitution. Keep internal
+helium binaries, author attribution, sandbox behavior, and policy rules.
+
+diff --git a/chrome/app/theme/chromium/BRANDING b/chrome/app/theme/chromium/BRANDING
+--- a/chrome/app/theme/chromium/BRANDING
++++ b/chrome/app/theme/chromium/BRANDING
+@@ -1,9 +1,9 @@
+ COMPANY_FULLNAME=The Helium Authors
+ COMPANY_SHORTNAME=The Helium Authors
+-PRODUCT_FULLNAME=Helium
+-PRODUCT_SHORTNAME=Helium
+-PRODUCT_INSTALLER_FULLNAME=Helium Installer
+-PRODUCT_INSTALLER_SHORTNAME=Helium Installer
++PRODUCT_FULLNAME=Still
++PRODUCT_SHORTNAME=Still
++PRODUCT_INSTALLER_FULLNAME=Still Installer
++PRODUCT_INSTALLER_SHORTNAME=Still Installer
+ COPYRIGHT=Copyright @LASTCHANGE_YEAR@ The Helium Authors. All rights reserved.
+ MAC_BUNDLE_ID=net.imput.helium
+ MAC_CREATOR_CODE=Cr24
+diff --git a/chrome/common/channel_info_posix.cc b/chrome/common/channel_info_posix.cc
+--- a/chrome/common/channel_info_posix.cc
++++ b/chrome/common/channel_info_posix.cc
+@@ -136,14 +136,14 @@
+       return "google-chrome.desktop";
+   }
+ #else  // BUILDFLAG(CHROMIUM_BRANDING)
+-  // Allow $CHROME_DESKTOP to override the built-in value, so that development
++  // Allow $STILL_DESKTOP to override the built-in value, so that development
+   // versions can set themselves as the default without interfering with
+   // non-official, packaged versions using the built-in value.
+-  std::optional<std::string> name = env->GetVar("HELIUM_DESKTOP");
++  std::optional<std::string> name = env->GetVar("STILL_DESKTOP");
+   if (name.has_value() && !name.value().empty()) {
+     return name.value();
+   }
+-  return "helium.desktop";
++  return "still.desktop";
+ #endif
+ }
+ #endif  // BUILDFLAG(IS_LINUX)
+diff --git a/chrome/common/chrome_paths_linux.cc b/chrome/common/chrome_paths_linux.cc
+--- a/chrome/common/chrome_paths_linux.cc
++++ b/chrome/common/chrome_paths_linux.cc
+@@ -81,7 +81,7 @@
+   std::unique_ptr<base::Environment> env(base::Environment::Create());
+   base::FilePath config_dir;
+   std::optional<std::string> chrome_config_home_str =
+-      env->GetVar("HELIUM_CONFIG_HOME");
++      env->GetVar("STILL_CONFIG_HOME");
+   if (chrome_config_home_str.has_value() &&
+       base::IsStringUTF8(chrome_config_home_str.value())) {
+     config_dir = base::FilePath::FromUTF8Unsafe(chrome_config_home_str.value());
+@@ -90,7 +90,7 @@
+         GetXDGDirectory(env.get(), kXdgConfigHomeEnvVar, kDotConfigDir);
+   }
+ 
+-  std::string data_dir_basename = "net.imput.helium";
++  std::string data_dir_basename = "com.jacobcamino.still";
+   *result = config_dir.Append(data_dir_basename + GetChannelSuffixForDataDir());
+   return true;
+ }
+diff --git a/chrome/browser/shell_integration_linux.cc b/chrome/browser/shell_integration_linux.cc
+--- a/chrome/browser/shell_integration_linux.cc
++++ b/chrome/browser/shell_integration_linux.cc
+@@ -485,7 +485,7 @@
+ }
+ 
+ std::string GetIconName() {
+-  return "helium";
++  return "still";
+ }
+ 
+ bool GetExistingShortcutContents(base::Environment* env,
+diff --git a/media/audio/pulse/pulse_util.cc b/media/audio/pulse/pulse_util.cc
+--- a/media/audio/pulse/pulse_util.cc
++++ b/media/audio/pulse/pulse_util.cc
+@@ -39,8 +39,8 @@
+ constexpr char kBrowserDisplayName[] = "google-chrome";
+ #define PRODUCT_STRING "Google Chrome"
+ #else
+-constexpr char kBrowserDisplayName[] = "helium";
+-#define PRODUCT_STRING "Helium"
++constexpr char kBrowserDisplayName[] = "still";
++#define PRODUCT_STRING "Still"
+ #endif
+ 
+ #if defined(DLOPEN_PULSEAUDIO)
+diff --git a/chrome/installer/linux/common/chromium-browser.info b/chrome/installer/linux/common/chromium-browser.info
+--- a/chrome/installer/linux/common/chromium-browser.info
++++ b/chrome/installer/linux/common/chromium-browser.info
+@@ -6,37 +6,37 @@
+ # chromium-browser packages for various platforms.
+ 
+ # Base name of the package.
+-PACKAGE="helium"
++PACKAGE="still"
+ 
+ # Filename of the main executable (for generating launcher scripts, etc.)
+-PROGNAME=chrome
++PROGNAME=helium
+ 
+ # Base directory for package installation.
+-INSTALLDIR=/opt/chromium.org/chromium
++INSTALLDIR=/opt/still
+ 
+ # Directory for device policy enrollments.
+ ENROLLMENTDIR=/etc/chromium/policies/enrollment
+ 
+ # Display string for desktop menu/icon.
+-MENUNAME="Helium"
++MENUNAME="Still"
+ 
+ # Brief package description.
+-SHORTDESC="The web browser from the Chromium projects"
++SHORTDESC="A quiet browser based on Helium"
+ 
+ # Detailed package description.
+-FULLDESC="Chromium is a browser that combines a minimal design with sophisticated technology to make the web faster, safer, and easier."
++FULLDESC="Still is a personal Helium fork with an Ink interface, grayscale pages, and local site controls. Built on Helium and Chromium."
+ 
+ # Package maintainer information.
+-MAINTNAME="imput"
+-MAINTMAIL="helium@imput.net"
+-PRODUCTURL="https://helium.computer"
++MAINTNAME="Jacob Schmidt"
++MAINTMAIL=""
++PRODUCTURL="https://jacobalbertschmidt.com/still/"
+ 
+ PROJECT_LICENSE="GPL-3.0 and BSD-3-Clause and LGPL-2.1+ and Apache-2.0 and IJG and MIT and GPL-2.0+ and ISC and OpenSSL and (MPL-1.1 or GPL-2.0 or LGPL-2.0)"
+ 
+ DEVELOPER_NAME="The Helium Authors"
+ 
+-BUGTRACKERURL="https://github.com/imputnet/helium-linux/issues"
++BUGTRACKERURL="https://github.com/jacob-camino/still-linux/issues"
+ 
+-HELPURL="https://helium.computer/"
++HELPURL="https://github.com/jacob-camino/still-linux"
+ 
+-RDN="net.imput.helium"
++RDN="com.jacobcamino.still"

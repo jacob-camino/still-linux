@@ -1,3 +1,11 @@
+# Still for Linux
+
+Personal Helium fork with an Ink interface, left tabs, grayscale pages, and local
+website controls. Source and packaging integration are prepared; **no Linux
+binary or download has been produced yet**. See [Still integration and build
+checks](still/README.md). The upstream documentation below describes Helium;
+its downloads, repositories, and signing key are not Still releases.
+
 # helium-linux
 Linux builds, packaging, and development tooling for the
 [Helium Browser](https://github.com/imputnet/helium).

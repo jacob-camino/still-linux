@@ -5,9 +5,9 @@ _current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 _root_dir="$(cd "$_current_dir/.." && pwd)"
 _build_dir="$_root_dir/build"
 _release_dir="$_build_dir/release"
-_app_dir="$_release_dir/Helium.AppDir"
+_app_dir="$_release_dir/Still.AppDir"
 
-_app_name="helium"
+_app_name="Still"
 _version=$(python3 "$_root_dir/helium-chromium/utils/helium_version.py" \
                    --tree "$_root_dir/helium-chromium" \
                    --platform-tree "$_root_dir" \
@@ -19,13 +19,14 @@ _arch=$(cat "$_build_dir/src/out/Default/args.gn" \
                 | sed 's/.*=//' \
                 | cut -d'"' -f2)
 
-if [ "$_arch" = "x64" ]; then
-    _arch="x86_64"
-fi
+case "$_arch" in
+    x64|arm64) ;;
+    *) echo "Unsupported Still package architecture: $_arch" >&2; exit 1 ;;
+esac
 
-_release_name="$_app_name-$_version-$_arch"
-_update_info="gh-releases-zsync|imputnet|helium-linux|latest|$_app_name-*-$_arch.AppImage.zsync"
-_tarball_name="${_release_name}_linux"
+_release_name="$_app_name-$_version-linux-$_arch"
+_update_info="gh-releases-zsync|jacob-camino|still-linux|latest|$_app_name-*-linux-$_arch.AppImage.zsync"
+_tarball_name="${_release_name}"
 _tarball_dir="$_release_dir/$_tarball_name"
 
 _files="helium
@@ -47,6 +48,8 @@ vk_swiftshader_icd.json
 xdg-mime
 xdg-settings"
 
+python3 "$_root_dir/still/verify-package-inputs.py" --source "$_build_dir/src"
+
 echo "copying release files and creating $_tarball_name.tar.xz"
 
 rm -rf "$_tarball_dir"
@@ -56,12 +59,18 @@ for file in $_files; do
     cp -r "$_build_dir/src/out/Default/$file" "$_tarball_dir" &
 done
 
+mkdir -p "$_tarball_dir/resources"
+cp "$_build_dir/src/out/Default/resources/still-blocking.crx" "$_tarball_dir/resources/"
+cp "$_root_dir/LICENSE" "$_tarball_dir/LICENSE.helium-linux"
+cp "$_root_dir/LICENSE.ungoogled_chromium" "$_tarball_dir/"
+cp "$_build_dir/src/LICENSE" "$_tarball_dir/LICENSE.chromium"
+
 mkdir -p "$_tarball_dir/locales"
 cp "$_build_dir/src/out/Default/locales/"*.pak "$_tarball_dir/locales/"
 
-cp "$_root_dir/package/helium.desktop" "$_tarball_dir"
+cp "$_root_dir/package/still.desktop" "$_tarball_dir"
 cp "$_root_dir/package/apparmor.cfg" "$_tarball_dir"
-cp "$_root_dir/package/helium-wrapper.sh" "$_tarball_dir/helium-wrapper"
+cp "$_root_dir/package/still-wrapper.sh" "$_tarball_dir/still-wrapper"
 
 wait
 (cd "$_tarball_dir" && ln -sf helium chrome)
@@ -94,17 +103,17 @@ tar vcf - "$_tarball_name" \
 
 # create AppImage
 rm -rf "$_app_dir"
-mkdir -p "$_app_dir/opt/helium/" "$_app_dir/usr/share/icons/hicolor/256x256/apps/"
-cp -r "$_tarball_dir"/* "$_app_dir/opt/helium/"
-cp "$_root_dir/package/helium.desktop" "$_app_dir"
+mkdir -p "$_app_dir/opt/still/" "$_app_dir/usr/share/icons/hicolor/256x256/apps/"
+cp -r "$_tarball_dir"/* "$_app_dir/opt/still/"
+cp "$_root_dir/package/still.desktop" "$_app_dir"
 
-cp "$_root_dir/package/helium-wrapper-appimage.sh" "$_app_dir/AppRun"
+cp "$_root_dir/package/still-wrapper-appimage.sh" "$_app_dir/AppRun"
 
-for out in "$_app_dir/helium.png" "${_app_dir}/usr/share/icons/hicolor/256x256/apps/helium.png"; do
-    cp "${_app_dir}/opt/helium/product_logo_256.png" "$out"
+for out in "$_app_dir/still.png" "${_app_dir}/usr/share/icons/hicolor/256x256/apps/still.png"; do
+    cp "${_app_dir}/opt/still/product_logo_256.png" "$out"
 done
 
-export APPIMAGETOOL_APP_NAME="Helium"
+export APPIMAGETOOL_APP_NAME="Still"
 export VERSION="$_version"
 
 # check whether CI GPG secrets are available

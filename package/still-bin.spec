@@ -1,19 +1,19 @@
 %define version 0.18.1.1
 %global debug_package %{nil}
 
-Name:    helium-bin
-Summary: Private, fast, and honest web browser
+Name:    still-bin
+Summary: A quiet browser based on Helium
 Version: %{version}
 Release: 1%{?dist}
 Group:   web
 License: GPL-3.0
-URL:     https://github.com/imputnet/helium-linux
-Source0: https://github.com/imputnet/helium-linux/releases/download/%{version}/helium-%{version}-x86_64_linux.tar.xz
-Source1: https://github.com/imputnet/helium-linux/releases/download/%{version}/helium-%{version}-arm64_linux.tar.xz
-Source2: net.imput.helium.metainfo.xml
+URL:     https://github.com/jacob-camino/still-linux
+Source0: https://github.com/jacob-camino/still-linux/releases/download/%{version}/Still-%{version}-linux-x64.tar.xz
+Source1: https://github.com/jacob-camino/still-linux/releases/download/%{version}/Still-%{version}-linux-arm64.tar.xz
+Source2: com.jacobcamino.still.metainfo.xml
 
 %if 0%{?debbuild}
-Packager: imput <helium@imput.net>
+Packager: Jacob Schmidt
 Provides: www-browser
 %endif
 
@@ -29,59 +29,59 @@ Recommends: liberation-fonts, vulkan-loader
 %endif
 
 %description
-Private, fast, and honest web browser based on Chromium
+Still is a personal fork of Helium and Chromium with an Ink interface, grayscale pages, and local site controls.
 
 %prep
 %ifarch x86_64 amd64
-%setup -q -n helium-%{version}-x86_64_linux
+%setup -q -n Still-%{version}-linux-x64
 %endif
 
 %ifarch aarch64 arm64
-%setup -q -T -b 1 -n helium-%{version}-arm64_linux
+%setup -q -T -b 1 -n Still-%{version}-linux-arm64
 %endif
 
 %build
 # We are using prebuilt binaries
 
 %install
-%define helium_base /opt/helium
-%define heliumdir %{buildroot}%{helium_base}
+%define still_base /opt/still
+%define stilldir %{buildroot}%{still_base}
 
-mkdir -p %{heliumdir} \
+mkdir -p %{stilldir} \
          %{buildroot}%{_bindir} \
          %{buildroot}%{_datadir}/applications \
          %{buildroot}%{_datadir}/metainfo \
          %{buildroot}%{_datadir}/icons/hicolor/256x256/apps
 
-cp -a . %{heliumdir}
+cp -a . %{stilldir}
 
 %if 0%{?debbuild}
 sed -Ei "s/(CHROME_VERSION_EXTRA=).*/\1deb/" \
-    %{heliumdir}/helium-wrapper
+    %{stilldir}/still-wrapper
 %else
 sed -Ei "s/(CHROME_VERSION_EXTRA=).*/\1rpm/" \
-    %{heliumdir}/helium-wrapper
+    %{stilldir}/still-wrapper
 %endif
 
 install -m 644 product_logo_256.png \
-    %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/helium.png
+    %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/still.png
 
-install -m 644 %{heliumdir}/helium.desktop \
+install -m 644 %{stilldir}/still.desktop \
     %{buildroot}%{_datadir}/applications/
 
 install -m 644 %{SOURCE2} \
-    %{buildroot}%{_datadir}/metainfo/net.imput.helium.metainfo.xml
+    %{buildroot}%{_datadir}/metainfo/com.jacobcamino.still.metainfo.xml
 
-ln -sf %{helium_base}/helium-wrapper \
-    %{buildroot}%{_bindir}/helium
+ln -sf %{still_base}/still-wrapper \
+    %{buildroot}%{_bindir}/still
 
 %files
 %defattr(-,root,root,-)
-%{helium_base}/
-%{_bindir}/helium
-%{_datadir}/applications/helium.desktop
-%{_datadir}/metainfo/net.imput.helium.metainfo.xml
-%{_datadir}/icons/hicolor/256x256/apps/helium.png
+%{still_base}/
+%{_bindir}/still
+%{_datadir}/applications/still.desktop
+%{_datadir}/metainfo/com.jacobcamino.still.metainfo.xml
+%{_datadir}/icons/hicolor/256x256/apps/still.png
 
 %post
 # Refresh icon cache and update desktop database
@@ -89,8 +89,8 @@ ln -sf %{helium_base}/helium-wrapper \
 /bin/touch --no-create %{_datadir}/icons/hicolor > /dev/null 2>&1 || :
 
 if command -v apparmor_parser > /dev/null 2>&1 && [ -d /etc/apparmor.d ]; then
-    cp %{helium_base}/apparmor.cfg /etc/apparmor.d/helium-bin
-    apparmor_parser -r -W -T /etc/apparmor.d/helium-bin || :
+    cp %{still_base}/apparmor.cfg /etc/apparmor.d/still-bin
+    apparmor_parser -r -W -T /etc/apparmor.d/still-bin || :
 fi
 
 %postun
@@ -101,11 +101,11 @@ case "$1" in
         /bin/touch --no-create %{_datadir}/icons/hicolor > /dev/null 2>&1
         /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor > /dev/null 2>&1 || :
 
-        if [ -f /etc/apparmor.d/helium-bin ]; then
+        if [ -f /etc/apparmor.d/still-bin ]; then
             if command -v apparmor_parser > /dev/null 2>&1; then
-                apparmor_parser -R /etc/apparmor.d/helium-bin || :
+                apparmor_parser -R /etc/apparmor.d/still-bin || :
             fi
-            rm -f /etc/apparmor.d/helium-bin
+            rm -f /etc/apparmor.d/still-bin
         fi
         ;;
 esac

@@ -140,6 +140,8 @@ helium_version() {
 helium_resources() {
     python3 "$_main_repo/utils/generate_resources.py" "$_main_repo/resources/generate_resources.txt" "$_main_repo/resources"
     python3 "$_main_repo/utils/replace_resources.py" "$_main_repo/resources/helium_resources.txt" "$_main_repo/resources" "$_src_dir"
+    # Still overlays are applied after the upstream patch/substitution steps.
+    python3 "$_root_dir/still/apply.py" --source "$_src_dir"
 }
 
 write_gn_args() {

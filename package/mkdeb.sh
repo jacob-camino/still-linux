@@ -4,8 +4,8 @@ set -euxo pipefail
 _current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 _root_dir="$(cd "$_current_dir/.." && pwd)"
 _release_dir="$_root_dir/build/release"
-_spec="$_root_dir/package/helium-bin.spec"
-_metainfo_file="$_root_dir/package/net.imput.helium.metainfo.xml"
+_spec="$_root_dir/package/still-bin.spec"
+_metainfo_file="$_root_dir/package/com.jacobcamino.still.metainfo.xml"
 
 _version=$(python3 "$_root_dir/helium-chromium/utils/helium_version.py" \
                    --tree "$_root_dir/helium-chromium" \
@@ -20,8 +20,8 @@ fi
 
 _tarball_basename="$(basename "$_tarball")"
 case "$_tarball_basename" in
-    *x86_64*) _deb_arch="amd64" ;;
-    *arm64*) _deb_arch="arm64" ;;
+    *-linux-x64.tar.xz) _deb_arch="amd64"; _download_arch="x64" ;;
+    *-linux-arm64.tar.xz) _deb_arch="arm64"; _download_arch="arm64" ;;
     *) exit 1;;
 esac
 
@@ -51,8 +51,13 @@ debbuild \
     --define "version $_version" \
     --define "_arch $_deb_arch" \
     --define "dist %{nil}" \
-    -bb "$_debbuild_dir/SPECS/helium-bin.spec"
+    -bb "$_debbuild_dir/SPECS/still-bin.spec"
 
 mkdir -p "$_release_dir"
-mv "$_debbuild_dir"/DEBS/*/*.deb "$_release_dir/"
+mapfile -t _debs < <(find "$_debbuild_dir/DEBS" -type f -name "*.deb")
+if [ "${#_debs[@]}" -ne 1 ]; then
+    echo "Expected exactly one Still Debian package" >&2
+    exit 1
+fi
+mv "${_debs[0]}" "$_release_dir/Still-$_version-linux-$_download_arch.deb"
 ls "$_release_dir"/*.deb

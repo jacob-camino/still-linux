@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<component type="desktop-application">
+  <id>com.jacobcamino.still</id>
+  <launchable type="desktop-id">still.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>Still</name>
+  <summary>A quiet browser based on Helium</summary>
+  <description>
+    <p>Still is a personal fork of Helium and Chromium with an Ink interface,
+      a left tab rail, grayscale pages, and color on demand.</p>
+    <p>Local site controls provide custom blocked domains, allowed exceptions,
+      and an optional adult-domain list. Settings stay on this device.</p>
+    <p>Still builds on the work of the Helium, Chromium, and ungoogled-chromium
+      authors. Their attribution and licenses are retained.</p>
+  </description>
+  <url type="homepage">https://jacobalbertschmidt.com/still/</url>
+  <url type="bugtracker">https://github.com/jacob-camino/still-linux/issues</url>
+  <url type="help">https://github.com/jacob-camino/still-linux</url>
+  <developer id="com.jacobcamino">
+    <name>Jacob Schmidt</name>
+  </developer>
+  <keywords>
+    <keyword>browser</keyword>
+    <keyword>web</keyword>
+    <keyword>internet</keyword>
+  </keywords>
+  <categories>
+    <category>Network</category>
+    <category>WebBrowser</category>
+  </categories>
+</component>

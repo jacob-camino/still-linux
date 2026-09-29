@@ -42,7 +42,6 @@ ___helium_setup() {
 
     ___helium_info_pull
     python3 "$_main_repo/utils/prune_binaries.py" "$_src_dir" "$_main_repo/pruning.list"
-    helium_resources
     ___helium_setup_gn
     setup_toolchain
 
@@ -53,6 +52,9 @@ ___helium_setup() {
     cd "$_src_dir"
     quilt push -a --refresh
 
+    helium_substitution
+    helium_apply_translations
+    helium_resources
     gn_gen
 }
 
@@ -118,7 +120,7 @@ ___helium_build() {
 
 ___helium_run() {
     cd "$_src_dir" && ./out/Default/helium \
-    --user-data-dir="$HOME/.config/net.imput.helium.dev" \
+    --user-data-dir="$HOME/.config/com.jacobcamino.still.dev" \
     --enable-ui-devtools=$RANDOM
 }
 
